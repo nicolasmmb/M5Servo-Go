@@ -117,14 +117,35 @@ s, _ := servo.NewContinuous(servo.Config{PWM: &myPWM{}, Channel: 0})
 | `count_low=500`, `count_high=2500` | `DefaultMinPulse`, `DefaultMaxPulse` |
 | `freq=50` | `DefaultPeriod = 20ms` |
 | `pin = port[1]` | caller passes the pin |
-| `set_duty(us)` | `SetPulse(time.Duration)` |
-| `set_angle`, `set_percent`, `set_radian` | `SetAngle`, `SetPercent`, `SetRadians` |
+| `set_duty(us)` | `SetPulse(time.Duration)`, clamped to the range |
+| `set_angle`, `set_percent`, `set_radian` | `SetAngle`, `SetPercent`, `SetRadians`, available on both types (inheritance, like the official) |
 | `clockwise`, `counterclockwise`, `stop` | same names |
 | 10 % minimum speed | `MinSpeed`, `NoMinSpeed` |
 | constructor writes `count_low` | same: `MinPulse` |
-| `deinit()` | `Release()` and `Bank.Close()` |
+| `deinit()` | `Release()` and `Bank.Close()` (no hardware teardown in TinyGo) |
 | `wait=True` blocks | `Settling(from, to)` returns the duration |
 | `print` on every command | no console output |
+
+### Coverage of the official API
+
+Every official method has a counterpart:
+
+| Official method | Here |
+|---|---|
+| `Servo180Unit(...)` / `Servo360Unit(...)` | `NewPositional` / `NewContinuous` |
+| `set_angle` | `SetAngle` (both types) |
+| `set_duty` | `SetPulse` |
+| `set_percent` | `SetPercent` |
+| `set_radian` | `SetRadians` |
+| `clockwise` | `Clockwise` |
+| `counterclockwise` | `CounterClockwise` |
+| `stop` | `Stop` |
+| `deinit` | `Release` + `Bank.Close` (partial) |
+
+Three differences remain, all intentional and documented above: no blocking
+`wait` (use `Settling`), no hardware teardown (TinyGo has no PWM deinit), and
+`SetPulse` clamps instead of writing any value. Everything else is extra:
+ramp, `Bank`, `SetRange`, `SetStopPulse`, `Resolution`, `Target`, `Speed`.
 
 ## Measured behaviour (real unit)
 

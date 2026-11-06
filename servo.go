@@ -98,6 +98,7 @@ type Servo struct {
 	last     time.Duration
 	target   time.Duration
 	lastAt   time.Duration
+	angle    float32
 	ch       uint8
 	minSpd   uint8
 	noMinSpd bool
@@ -155,6 +156,44 @@ func newServo(cfg Config) (*Servo, error) {
 	s.target = s.min
 	return s, nil
 }
+
+// SetAngle sets the pulse from an angle of 0..180 degrees. Values outside the
+// range are clamped.
+//
+// The official Servo360Unit inherits set_angle from Servo180Unit, so Continuous
+// exposes it too: on a 360° servo it is a shortcut to a raw pulse.
+func (s *Servo) SetAngle(degrees float32) {
+	if degrees < 0 {
+		degrees = 0
+	}
+	if degrees > 180 {
+		degrees = 180
+	}
+	s.setTarget(s.min + time.Duration(float32(s.span())*(degrees/180)))
+	s.angle = degrees
+}
+
+// SetPercent sets the pulse from a position of 0..100 percent.
+func (s *Servo) SetPercent(percent uint8) {
+	if percent > 100 {
+		percent = 100
+	}
+	s.SetAngle(float32(percent) * 1.8)
+}
+
+// SetRadians sets the pulse from an angle of 0..π radians.
+func (s *Servo) SetRadians(radians float32) {
+	if radians < 0 {
+		radians = 0
+	}
+	if radians > 3.1415926535 {
+		radians = 3.1415926535
+	}
+	s.SetAngle(radians * 57.29577951)
+}
+
+// Angle returns the last commanded angle in degrees.
+func (s *Servo) Angle() float32 { return s.angle }
 
 // Channel returns the PWM channel of the servo.
 func (s *Servo) Channel() uint8 { return s.ch }

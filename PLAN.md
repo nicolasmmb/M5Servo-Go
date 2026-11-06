@@ -573,6 +573,12 @@ Opções:
 Recomendação: opção B. O motivo é a segurança. Um servo que gira no boot pode
 mover o mecanismo sem supervisão.
 
+## 15.2 Cobertura da API oficial
+
+Todos os métodos oficiais têm equivalente. A tabela do item 4.4 continua
+válida. Três diferenças ficam: sem `wait` bloqueante, sem desligamento de
+hardware (`deinit`), e `SetPulse` limita o valor.
+
 ## 16. Resultados de hardware
 
 Um servo no Grove, placa M5StickC Plus2. O firmware roda um teste por vez.

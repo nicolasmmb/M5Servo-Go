@@ -266,6 +266,27 @@ func TestSetRange(t *testing.T) {
 	}
 }
 
+// TestContinuousInheritsPositional locks parity with the official driver:
+// Servo360Unit inherits set_angle/set_percent/set_radian from Servo180Unit.
+func TestContinuousInheritsPositional(t *testing.T) {
+	c, _ := newTestCont(t, Config{})
+	c.SetAngle(90)
+	if got := c.Pulse(); got != 1500*time.Microsecond {
+		t.Fatalf("SetAngle on Continuous = %v, want 1500µs", got)
+	}
+	if got := c.Angle(); got != 90 {
+		t.Fatalf("Angle = %v", got)
+	}
+	c.SetPercent(0)
+	if got := c.Pulse(); got != DefaultMinPulse {
+		t.Fatalf("SetPercent(0) = %v", got)
+	}
+	c.SetRadians(3.1415926535)
+	if got := c.Pulse(); got < 2499*time.Microsecond {
+		t.Fatalf("SetRadians(pi) = %v", got)
+	}
+}
+
 func TestStopPulseTrim(t *testing.T) {
 	c, _ := newTestCont(t, Config{})
 	if err := c.SetStopPulse(1520 * time.Microsecond); err != nil {
