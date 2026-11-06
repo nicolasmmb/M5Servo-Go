@@ -100,10 +100,11 @@ s, _ := servo.NewContinuous(servo.Config{PWM: &myPWM{}, Channel: 0})
 | `SetSpeed(int8)` / `Speed() int8` | Signed speed, positive clockwise |
 | `Stop()` | Stop pulse, torque on |
 | `Release()` | No pulse, no torque |
-| `SetPulse(d)` / `Pulse()` / `Target()` | Direct pulse |
+| `SetPulse(d)` / `SetPulseStrict(d)` / `Pulse()` / `Target()` | Direct pulse, clamped or validated |
 | `SetAngle(deg)` / `SetPercent(p)` / `SetRadians(r)` | Positional commands |
 | `Angle() float32` | Last commanded angle |
 | `SetRange(min, max) error` | Course and stop point, midpoint |
+| `DetachNative(s, pwm, pin)` | `deinit` equivalent: no pulse, pin back to input, timer channels freed |
 | `SetStopPulse(d) error` | Stop trim |
 | `SetRamp(d)` / `Ramp()` / `Update(now)` | Ramp control |
 | `Settling(from, to)` | Travel time, 0.15 ms per µs |
@@ -122,7 +123,7 @@ s, _ := servo.NewContinuous(servo.Config{PWM: &myPWM{}, Channel: 0})
 | `clockwise`, `counterclockwise`, `stop` | same names |
 | 10 % minimum speed | `MinSpeed`, `NoMinSpeed` |
 | constructor writes `count_low` | same: `MinPulse` |
-| `deinit()` | `Release()` and `Bank.Close()` (no hardware teardown in TinyGo) |
+| `deinit()` | `Release()` for the signal, `DetachNative` for the pin and the channels |
 | `wait=True` blocks | `Settling(from, to)` returns the duration |
 | `print` on every command | no console output |
 
@@ -140,12 +141,25 @@ Every official method has a counterpart:
 | `clockwise` | `Clockwise` |
 | `counterclockwise` | `CounterClockwise` |
 | `stop` | `Stop` |
-| `deinit` | `Release` + `Bank.Close` (partial) |
+| `deinit` | `Release` (signal) + `DetachNative` (pin and channel release) |
 
-Three differences remain, all intentional and documented above: no blocking
-`wait` (use `Settling`), no hardware teardown (TinyGo has no PWM deinit), and
-`SetPulse` clamps instead of writing any value. Everything else is extra:
-ramp, `Bank`, `SetRange`, `SetStopPulse`, `Resolution`, `Target`, `Speed`.
+Two differences remain, both intentional and documented above: no blocking
+`wait` (use `Settling`), and `SetPulse` clamps instead of writing any value
+(`SetPulseStrict` returns `ErrOutOfRange` when you prefer an error). The
+hardware teardown of `deinit` needs two extra steps in TinyGo, which
+`DetachNative` does for you:
+
+```go
+if err := servo.DetachNative(s, machine.PWM0, pin); err != nil {
+    println("detach:", err.Error())
+}
+// s.Release()      + pin -> input + timer reconfigured (channels freed)
+```
+
+Side effect of `DetachNative`: every servo on that timer stops, because the
+only way to free LEDC channels in TinyGo is to reconfigure the timer.
+Everything else is extra: ramp, `Bank`, `SetRange`, `SetStopPulse`,
+`Resolution`, `Target`, `Speed`.
 
 ## Measured behaviour (real unit)
 
