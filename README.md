@@ -136,6 +136,10 @@ table is in [BENCHMARKS.md](BENCHMARKS.md). Two findings matter:
    500-2500 µs therefore gives full speed for most of the course.
 2. **A narrow range fixes it.** With `SetRange(1000µs, 2000µs)` the ramp and
    the intermediate speeds become visible.
+3. **`Release` was proven electrically.** The firmware reads its own PWM pin
+   as an input: `Stop()` shows a 1497 µs pulse at 50 Hz, `Release()` shows
+   **zero edges**. By hand both feel the same, because this servo has no
+   holding torque inside the deadband.
 
 Recommended setup for smooth speed control:
 
@@ -153,7 +157,9 @@ c.SetRamp(500 * time.Millisecond)
   deadband is about 8 µs, so this is enough. A 16-bit LEDC setup would need
   direct register access.
 - The official `wait` is not implemented as a sleep. Use `Settling`.
-- `Release()` removes the pulse but a geared servo still feels stiff by hand.
+- `Release()` removes the pulse (proven: 0 edges on the pin). This servo has
+  no holding torque at the stop pulse either, so `Stop` and `Release` feel the
+  same by hand. Do not rely on the hand to tell them apart.
 - The stop point of a 360° servo is not always the midpoint. Measure it and
   use `SetStopPulse`.
 
@@ -179,6 +185,8 @@ watch a single behaviour and answer a single question. Set `test` in
 | 12 | saturation: 1000 µs vs 1300 µs |
 | 13 | narrow range 1000-2000 µs |
 | 14 | ramp inside 1000-2000 µs, 3 s |
+| 17 | release A/B with motion cues |
+| 18 | electrical report: edges and pulse width of its own pin |
 
 The firmware drives every candidate signal pin with the same pulse, so the
 Grove port does not matter.

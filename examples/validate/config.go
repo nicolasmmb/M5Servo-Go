@@ -9,4 +9,4 @@ package main
 //	3  clockwise 50%                8  ramp 0 -> 100% in 1.5 s
 //	4  counterclockwise 50%         9  constant pulse 1200 us
 //	5  clockwise 1% (min speed 10%)
-const test = 0
+const test = 18

@@ -66,10 +66,46 @@ Measured with the guided firmware (`examples/validate`), one test per flash:
 | Full speed counterclockwise | OK |
 | Minimum speed clamp (1 % → 10 %) | OK, slow rotation, no buzz |
 | Stop with torque (`Stop`) | OK, light holding force |
-| `Release` (no pulse) | Inconclusive by hand: the gear train is stiff |
+| `Release` (no pulse) | **0 edges** on the pin: no pulses at all (see below) |
 | Ramp, official range 500-2500 µs | Subtle: half of the ramp is saturated |
 | Ramp, range 1000-2000 µs, 3 s | Clear acceleration |
 | Fixed pulse 1200 µs for 8 s | Constant speed, no jitter |
+| Ramp profile (measured pulse) | 1500 → 1250 → 1000 µs, linear |
+
+### Electrical measurement without a scope
+
+The driven pin is still readable as an input (`machine.Pin.Get` works for
+output pins), so `examples/validate` test 18 counts edges and measures the high
+time of its own PWM:
+
+| State | Edges in 120 ms | High time |
+|---|---:|---|
+| `Stop()` (1500 µs) | 12 (50 Hz) | 7461 counts → **1497 µs** |
+| `Clockwise(100)` (1000 µs) | 12 | 2491–4976 counts → **1000 µs** |
+| `Release()` | **0** | **0** |
+
+Calibration is in-block: the two known pulses (1500 and 1000 µs) give the
+loop rate, then the third value is scaled with it. The loop rate changes with
+interrupt load, so absolute counts from different blocks are not comparable;
+ratios inside one block are.
+
+Ramp profile, same method, `SetRange(1000-2000 µs)`, `SetRamp(3s)`, target
+100 % (1000 µs):
+
+| Time | High counts | Pulse |
+|---:|---:|---:|
+| 0 ms | 7461 | 1500 µs |
+| 751 ms | 6215 | 1250 µs |
+| 1502 ms | 4976 | 1000 µs (target) |
+| 2253 ms | 4970 | 1000 µs |
+| 3004 ms | 4970 | 1000 µs |
+
+The ramp reaches the target in 1.5 s, which is correct: `Ramp` is the time to
+travel the **full** span (2000−1000 = 1000 µs), and this move was half of it.
+
+Conclusion for `Release`: the pulse train really stops. The mechanical test is
+useless on this unit because the servo has no holding torque inside its
+deadband, so both states feel the same by hand.
 
 ### Servo curve of this unit
 

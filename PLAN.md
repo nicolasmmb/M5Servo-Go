@@ -584,7 +584,7 @@ Um servo no Grove, placa M5StickC Plus2. O firmware roda um teste por vez.
 | 3 horário 50 % | sentido OK. Velocidade igual à máxima. |
 | 5 1 % elevado a 10 % | OK. Gira devagar, sem zumbido. |
 | 6 `Stop` com torque | OK. Força de retenção pequena, esperada em 9 g. |
-| 7 `Release` sem torque | Inconclusivo no dedo. A redução mecânica é alta. |
+| 7 `Release` sem torque | Inconclusivo no dedo. Provado por medição elétrica: 0 bordas. |
 | 8 rampa com faixa oficial | Sutil. Metade da rampa fica saturada. |
 | 9 pulso fixo de 1200 µs | OK. Rotação constante, sem tremor. |
 | 11 1300 µs e 1700 µs | Lento horário e lento anti-horário. |
@@ -601,6 +601,25 @@ curso.
 Consequência para o uso: para controle de velocidade, use
 `SetRange(1000µs, 2000µs)`. Ajuste a parada com `SetStopPulse` quando o
 midpoint não for a parada real.
+
+### Medição elétrica sem osciloscópio
+
+O pino do PWM continua legível como entrada (`machine.Pin.Get` funciona em
+pino de saída). O teste 18 conta bordas e mede a largura do pulso.
+
+| Estado | Bordas em 120 ms | Largura medida |
+|---|---:|---|
+| `Stop()` 1500 µs | 12 (50 Hz) | 1497 µs |
+| `Clockwise(100)` 1000 µs | 12 | 1000 µs |
+| `Release()` | **0** | **0** |
+
+Resultado: o `Release` remove o trem de pulsos de verdade. O teste manual não
+serve neste servo, porque ele não tem torque de retenção dentro da zona morta.
+Os dois estados ficam iguais no dedo.
+
+Rampa medida, faixa 1000-2000 µs, `SetRamp(3s)`, alvo 1000 µs:
+0 ms = 1500 µs, 751 ms = 1250 µs, 1502 ms = 1000 µs. A rampa termina em 1,5 s
+porque `Ramp` é o tempo da faixa completa (1000 µs) e o movimento foi metade.
 
 ### Mudança feita por causa do teste
 
