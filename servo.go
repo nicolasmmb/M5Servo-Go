@@ -57,6 +57,7 @@ var (
 	ErrInUse      = errors.New("servo: channel already in use in this bank")
 	ErrClosed     = errors.New("servo: bank is closed")
 	ErrBadChannel = errors.New("servo: channel must be below 32")
+	ErrOutOfRange = errors.New("servo: pulse is outside the configured range")
 )
 
 // Config configures one servo. Zero values take the defaults.
@@ -240,6 +241,17 @@ func (s *Servo) SetStopPulse(p time.Duration) error {
 		return ErrBadStop
 	}
 	s.stop = p
+	return nil
+}
+
+// SetPulseStrict is SetPulse with validation. It returns ErrOutOfRange when p
+// is outside [MinPulse, MaxPulse] and writes nothing. SetPulse, in contrast,
+// clamps the value.
+func (s *Servo) SetPulseStrict(p time.Duration) error {
+	if p < s.min || p > s.max {
+		return ErrOutOfRange
+	}
+	s.SetPulse(p)
 	return nil
 }
 

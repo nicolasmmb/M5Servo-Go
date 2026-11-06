@@ -59,6 +59,22 @@ func NewNativePositional(pwm NativePWM, pin machine.Pin) (*Positional, error) {
 	return NewPositional(Config{PWM: pwm, Channel: ch})
 }
 
+// DetachNative is the closest equivalent of the official deinit(): it stops the
+// pulses, returns the pin to input mode (high impedance) and frees the channels
+// of the timer.
+//
+// TinyGo has no PWM deinit, so the channel release works by reconfiguring the
+// timer with the same period: Configure disables and frees every channel of
+// that timer. Side effect: any other servo on the same timer also stops.
+//
+// Call it on the Servo you want to release; the pin is the one passed to
+// NewNative.
+func DetachNative(s *Servo, pwm NativePWM, pin machine.Pin) error {
+	s.Release()
+	pin.Configure(machine.PinConfig{Mode: machine.PinInput})
+	return pwm.Configure(machine.PWMConfig{Period: uint64(s.Period())})
+}
+
 func prepare(pwm NativePWM, pin machine.Pin) (uint8, error) {
 	if err := ConfigurePeriod(pwm, DefaultPeriod); err != nil {
 		return 0, err

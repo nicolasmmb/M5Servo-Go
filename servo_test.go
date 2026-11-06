@@ -287,6 +287,31 @@ func TestContinuousInheritsPositional(t *testing.T) {
 	}
 }
 
+func TestSetPulseStrict(t *testing.T) {
+	c, p := newTestCont(t, Config{})
+	c.SetPulse(1500 * time.Microsecond)
+	before := p.last()
+
+	if err := c.SetPulseStrict(1500 * time.Microsecond); err != nil {
+		t.Fatalf("in range = %v", err)
+	}
+	if p.last() != before {
+		t.Fatalf("in range must write: %d", p.last())
+	}
+
+	for _, bad := range []time.Duration{0, 400 * time.Microsecond, 2600 * time.Microsecond, -time.Second} {
+		if err := c.SetPulseStrict(bad); err != ErrOutOfRange {
+			t.Fatalf("%v: err = %v, want ErrOutOfRange", bad, err)
+		}
+		if p.last() != before {
+			t.Fatalf("%v: strict mode wrote %d, want no write", bad, p.last())
+		}
+		if c.Pulse() != 1500*time.Microsecond {
+			t.Fatalf("%v: pulse changed to %v", bad, c.Pulse())
+		}
+	}
+}
+
 func TestStopPulseTrim(t *testing.T) {
 	c, _ := newTestCont(t, Config{})
 	if err := c.SetStopPulse(1520 * time.Microsecond); err != nil {
