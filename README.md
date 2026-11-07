@@ -105,6 +105,7 @@ s, _ := servo.NewContinuous(servo.Config{PWM: &myPWM{}, Channel: 0})
 | `Angle() float32` | Last commanded angle |
 | `SetRange(min, max) error` | Course and stop point, midpoint |
 | `DetachNative(s, pwm, pin)` | `deinit` equivalent: no pulse, pin back to input, timer channels freed |
+| `DetachNativeAll(pwm, period, pins...)` | Same for a group, timer freed once |
 | `SetStopPulse(d) error` | Stop trim |
 | `SetRamp(d)` / `Ramp()` / `Update(now)` | Ramp control |
 | `Settling(from, to)` | Travel time, 0.15 ms per µs |
@@ -237,9 +238,9 @@ Tracked in `m5stick-hardware-pocs/docs/LIB-AGNOSTIC-AUDIT.md`.
 
 | Gap | Effect | Fix |
 |---|---|---|
-| `native.go` tag is `esp32 \|\| rp2040` | No `NewNative` on ESP32-C3/S3, although their PWM API is identical | Add `esp32c3` and `esp32s3` to the tag |
-| CI compiles only for the host | A regression in agnosticism passes CI | Add `tinygo build -target=pico` and `-target=arduino-nano33` with the constructor |
-| `DetachNative` handles one servo | A bank needs one call per servo, and each call stops the timer | Add a bank variant that frees the timer once |
+| ~~`native.go` tag too narrow~~ | Fixed: `esp32 \|\| esp32c3 \|\| esp32s3 \|\| rp2040` | Done |
+| ~~CI compiles only for the host~~ | Fixed: the `agnostic` job builds for pico and arduino-nano33 | Done |
+| ~~`DetachNative` handles one servo~~ | Fixed: `DetachNativeAll` frees the timer once for a group | Done |
 | 5 V under load and temperature not measured | No data for two servos or long runs | Bench test with a multimeter |
 | Servo curve saturates near 1000 µs | Official 500-2500 µs gives full speed for most of the course | Documented; use `SetRange(1000µs, 2000µs)` |
 

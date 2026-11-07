@@ -1,8 +1,8 @@
-//go:build esp32 || rp2040
+//go:build esp32 || esp32c3 || esp32s3 || rp2040
 
 // Adapter for chips whose TinyGo PWM API is Configure(Period) + Channel(pin)
-// + Set(channel, value) + Top(). Both the classic ESP32 (LEDC) and the
-// RP2040 expose this shape, so the same code serves any board built on them.
+// + Set(channel, value) + Top(). The classic ESP32, the ESP32-C3/S3 (same LEDC
+// API through machine_esp32xx_pwm.go) and the RP2040 all expose this shape.
 //
 // A board is never named here: the caller passes the PWM peripheral it wants
 // (machine.PWM0..PWM3, machine.PWM0..PWM7, ...) and the pin that the servo
@@ -73,6 +73,22 @@ func DetachNative(s *Servo, pwm NativePWM, pin machine.Pin) error {
 	s.Release()
 	pin.Configure(machine.PinConfig{Mode: machine.PinInput})
 	return pwm.Configure(machine.PWMConfig{Period: uint64(s.Period())})
+}
+
+// DetachNativeAll is DetachNative for a group: it returns every pin to input
+// mode and frees the timer once.
+//
+// The timer release works by reconfiguring it, which is the only way to free
+// LEDC channels in TinyGo. Every servo on that timer stops, and their Servo
+// values must not be used afterwards.
+func DetachNativeAll(pwm NativePWM, period time.Duration, pins ...machine.Pin) error {
+	for _, p := range pins {
+		p.Configure(machine.PinConfig{Mode: machine.PinInput})
+	}
+	if period == 0 {
+		period = DefaultPeriod
+	}
+	return pwm.Configure(machine.PWMConfig{Period: uint64(period)})
 }
 
 func prepare(pwm NativePWM, pin machine.Pin) (uint8, error) {
