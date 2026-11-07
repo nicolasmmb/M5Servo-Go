@@ -632,7 +632,29 @@ porque `Ramp` é o tempo da faixa completa (1000 µs) e o movimento foi metade.
 O teste 6 mostrou que a parada pode não ficar no midpoint. A lib ganhou
 `SetStopPulse` para o ajuste fino.
 
-## 17. Referências
+## 17. Pendências
+
+Estado em 2026-11-06. A auditoria completa está em
+`m5stick-hardware-pocs/docs/LIB-AGNOSTIC-AUDIT.md`.
+
+- [ ] Ampliar a tag de `native.go` para `esp32 || esp32c3 || esp32s3 || rp2040`.
+      Motivo: o C3 e o S3 têm a mesma API de PWM do ESP32 clássico.
+- [ ] CI: compilar com o construtor para `pico` e `arduino-nano33`. Pega
+      regressão de agnosticismo.
+- [ ] `DetachNative` para grupo de servos: liberar o timer uma vez.
+- [ ] Medir 5 V sob carga e temperatura do servo.
+- [ ] Validação de dois servos no `Bank` em hardware.
+- [ ] Fase 5 do POC em `m5stick-hardware-pocs/units/servo`.
+
+Já resolvido nesta rodada:
+
+- [x] `SetPulseStrict` e `DetachNative` (PR 1, merge `eae94c3`).
+- [x] Paridade com os setters posicionais no `Continuous` (herança igual à
+      oficial).
+- [x] `Release` e rampa provados por medição elétrica.
+- [x] Publicação do repo e tag `v0.1.0`.
+
+## 18. Referências
 
 - Servo Kit 360° (A076-C): https://docs.m5stack.com/en/accessory/Servo_Kit_360
 - Lib oficial 180°: `uiflow-micropython/m5stack/libs/unit/servo180.py`

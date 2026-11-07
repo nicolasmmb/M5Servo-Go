@@ -231,6 +231,21 @@ make validate PORT=/dev/cu.usbserial-XXXX       # flash and monitor
 make flash EXAMPLE=spin PORT=/dev/cu.usbserial-XXXX
 ```
 
+## Known gaps
+
+Tracked in `m5stick-hardware-pocs/docs/LIB-AGNOSTIC-AUDIT.md`.
+
+| Gap | Effect | Fix |
+|---|---|---|
+| `native.go` tag is `esp32 \|\| rp2040` | No `NewNative` on ESP32-C3/S3, although their PWM API is identical | Add `esp32c3` and `esp32s3` to the tag |
+| CI compiles only for the host | A regression in agnosticism passes CI | Add `tinygo build -target=pico` and `-target=arduino-nano33` with the constructor |
+| `DetachNative` handles one servo | A bank needs one call per servo, and each call stops the timer | Add a bank variant that frees the timer once |
+| 5 V under load and temperature not measured | No data for two servos or long runs | Bench test with a multimeter |
+| Servo curve saturates near 1000 µs | Official 500-2500 µs gives full speed for most of the course | Documented; use `SetRange(1000µs, 2000µs)` |
+
+Not a gap, by design: no blocking `wait` (use `Settling`), and no `pin = port[1]`
+helper (the caller passes the pin, so the package stays board agnostic).
+
 ## References
 
 - Servo Kit 360° (A076-C): https://docs.m5stack.com/en/accessory/Servo_Kit_360
