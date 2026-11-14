@@ -3,7 +3,7 @@
 Plano da lib de servo PWM para M5Stack.
 
 - Módulo: `github.com/nicolasmmb/M5Servo-Go` (decidido)
-- Diretório: `/Users/nicolas.mmb/__DEV__/M5Servo-Go`
+- Diretório: `/Users/nicolas.mmb/__DEV__/m5-libs/M5Servo-Go`
 - Padrão: `m5stick-hardware-pocs/docs/LIB-CREATION-GUIDE.md`
 - Estado: fases 0 a 4 concluídas. Fase 5 concluída com 9 testes de hardware.
 
